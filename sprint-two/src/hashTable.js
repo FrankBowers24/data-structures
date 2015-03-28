@@ -10,7 +10,7 @@ HashTable.prototype.insert = function(k, v){
   if(bucketList === undefined || bucketList === null){
     this._storage.set(i, [[k, v]]);
     this._count++;
-    this.resizeCheck();
+    this.resizeCheck(true);
   } else {
     var keyFound = _.filter(bucketList, function(tuple){
       var result = tuple[0] === k;
@@ -22,7 +22,7 @@ HashTable.prototype.insert = function(k, v){
     if(!keyFound){
       this._storage.set(bucketList.push([k, v]));
       this._count++;
-      this.resizeCheck();
+      this.resizeCheck(true);
     }
   }
 };
@@ -56,14 +56,15 @@ HashTable.prototype.remove = function(k){
     bucketList.splice(index, 1);
     this._storage.set(i, bucketList);
     this._count--;
-    this.resizeCheck();
+    this.resizeCheck(false);
   }
 };
 
-HashTable.prototype.resizeCheck = function(){
-  if(this._count/this._limit >= 0.75){
+HashTable.prototype.resizeCheck = function(isIncreasing){
+  if(this._count/this._limit >= 0.75 && isIncreasing){
     this.resize(this._limit*2);
-  } else if(this._count/this._limit <= 0.25){
+  } else if(this._count/this._limit <= 0.25 && !isIncreasing
+    && this._limit > 8){
     this.resize(this._limit/2);
   }
 };
@@ -73,6 +74,7 @@ HashTable.prototype.resize = function(newLimit){
   var thiz = this;
   this._storage = LimitedArray(newLimit);
   this._limit = newLimit;
+  this._count = 0;
 
   temp.each(function(bucketList){
     _.each(bucketList, function(tuple){
